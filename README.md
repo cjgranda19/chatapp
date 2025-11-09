@@ -766,7 +766,7 @@ Este proyecto está bajo la Licencia MIT. Ver archivo `LICENSE` para más detall
 
 ## 👥 Autores
 
-- **Tu Nombre** - Desarrollo inicial
+- Carlos - Erick - Desarrollo inicial
 
 ---
 
@@ -777,14 +777,6 @@ Este proyecto está bajo la Licencia MIT. Ver archivo `LICENSE` para más detall
 - MongoDB University
 - React Team
 - Todos los contribuidores
-
----
-
-## 📞 Contacto
-
-- **Email**: tu.email@ejemplo.com
-- **GitHub**: [@tu-usuario](https://github.com/tu-usuario)
-- **LinkedIn**: [Tu Perfil](https://linkedin.com/in/tu-perfil)
 
 ---
 
@@ -825,23 +817,8 @@ Este proyecto está bajo la Licencia MIT. Ver archivo `LICENSE` para más detall
 
 ---
 
-## ❓ FAQ
 
-### ¿Puedo usar una base de datos diferente?
-Sí, pero necesitarás adaptar los modelos de Mongoose. Se recomienda mantener MongoDB por compatibilidad.
-
-### ¿Cómo cambio el puerto del servidor?
-Modifica `PORT` en el archivo `.env` del backend.
-
-### ¿Funciona en navegadores antiguos?
-Se recomienda Chrome 90+, Firefox 88+, Safari 14+, Edge 90+.
-
-### ¿Puedo desplegar en Heroku/Vercel/Netlify?
-Sí, consulta las guías de deployment de cada plataforma. Asegúrate de configurar variables de entorno.
-
-### ¿Cómo aumento el límite de archivos?
-Modifica `limits.fileSize` en `backend/src/config/multer.js`.
 
 ---
 
-**Desarrollado con ❤️ usando Node.js y React**
+**Desarrollado por El grupo de nosotros XD usando Node.js y React**
