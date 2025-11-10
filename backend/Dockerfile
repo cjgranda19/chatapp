@@ -1,5 +1,5 @@
 # Dockerfile para Backend
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Directorio de trabajo
 WORKDIR /app

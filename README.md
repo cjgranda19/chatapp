@@ -31,6 +31,8 @@ docker-compose up
 # 3. Abrir http://localhost:5173
 ```
 
+> ⚠️ **Error de Node.js 18?** Si ves `Vite requires Node.js version 20.19+`, lee **[DOCKER_UPDATE.md](DOCKER_UPDATE.md)**
+
 👉 **[Guía Completa de Docker](DOCKER_GUIDE.md)** - Más opciones y comandos
 
 ### ⚡ Opción 2: Instalación Local
