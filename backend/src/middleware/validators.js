@@ -32,8 +32,8 @@ export const validateCreateRoom = [
     .trim()
     .notEmpty()
     .withMessage("El tipo de sala es requerido")
-    .isIn(["texto", "multimedia"])
-    .withMessage("El tipo debe ser 'texto' o 'multimedia'"),
+    .isIn(["texto", "multimedia", "standard"])
+    .withMessage("El tipo debe ser 'texto', 'standard' o 'multimedia'"),
   
   body("pin")
     .optional()
@@ -60,8 +60,8 @@ export const validateUpdateRoom = [
   body("type")
     .optional()
     .trim()
-    .isIn(["texto", "multimedia"])
-    .withMessage("El tipo debe ser 'texto' o 'multimedia'"),
+    .isIn(["texto", "multimedia", "standard"])
+    .withMessage("El tipo debe ser 'texto', 'standard' o 'multimedia'"),
   
   handleValidationErrors
 ];
