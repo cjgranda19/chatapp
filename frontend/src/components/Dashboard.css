@@ -149,6 +149,39 @@
   cursor: not-allowed;
 }
 
+/* ---------- BOTONES ESPECIALES ---------- */
+.btn-show-form {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.9rem !important;
+  border-radius: 6px !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+  transition: all 0.3s ease;
+}
+
+.btn-show-form:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.6) !important;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.form-buttons button {
+  flex: 1;
+}
+
+.btn-cancel {
+  background: #ef4444 !important;
+}
+
+.btn-cancel:hover {
+  background: #dc2626 !important;
+}
+
 /* ---------- LISTA DE SALAS ---------- */
 .rooms-grid {
   display: grid;

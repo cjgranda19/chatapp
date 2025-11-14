@@ -1,155 +1,109 @@
-# 💬 Sistema de Chat en Tiempo Real con Salas Seguras
+# 💬 ChatApp - Aplicación de Chat en Tiempo Real
 
-Sistema de mensajería instantánea con salas de chat seguras, autenticación de administradores, soporte multimedia y comunicación en tiempo real mediante WebSockets.
-
-![Node.js](https://img.shields.io/badge/Node.js-v18+-green)
-![React](https://img.shields.io/badge/React-18.3-blue)
-![Socket.IO](https://img.shields.io/badge/Socket.IO-4.x-black)
-![MongoDB](https://img.shields.io/badge/MongoDB-6.x-green)
-![License](https://img.shields.io/badge/license-MIT-blue)
+Sistema de chat con salas, mensajes en tiempo real, panel de administración y seguridad avanzada.
 
 ---
 
-## � Inicio Rápido para Colaboradores
+## 🚀 Inicio Rápido con Docker (RECOMENDADO)
 
-**¿Primera vez con este proyecto?** 
+### Para tus compañeros de trabajo
 
-👉 **[Lee la Guía de Instalación Completa](SETUP_COLABORADORES.md)** - Instrucciones paso a paso
-
-### 🐳 Opción 1: Con Docker (MÁS FÁCIL - Recomendado)
-
-No necesitas instalar MongoDB, Node.js ni nada. Solo Docker:
-
+#### 1️⃣ Clonar el proyecto
 ```bash
-# 1. Clonar
 git clone https://github.com/cjgranda19/chatapp.git
 cd chatapp
-
-# 2. Iniciar todo con un comando
-docker-compose up
-
-# 3. Abrir http://localhost:5173
 ```
 
-> ⚠️ **Error de Node.js 18?** Si ves `Vite requires Node.js version 20.19+`, lee **[DOCKER_UPDATE.md](DOCKER_UPDATE.md)**
+#### 2️⃣ Iniciar con Docker
 
-👉 **[Guía Completa de Docker](DOCKER_GUIDE.md)** - Más opciones y comandos
+**Windows:**
+```cmd
+INICIAR.bat
+```
 
-### ⚡ Opción 2: Instalación Local
+**Linux/Mac:**
+```bash
+chmod +x INICIAR.sh
+./INICIAR.sh
+```
+
+#### 3️⃣ Acceder a la aplicación
+
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5000
+
+#### 4️⃣ Login como Admin
+
+- **Usuario**: `admin`
+- **Contraseña**: `admin`
+
+✅ El admin se crea automáticamente la primera vez que inicia MongoDB.
+
+---
+
+## 📋 Requisitos
+
+- **Docker Desktop** (Windows/Mac) o **Docker Engine** (Linux)
+- **Git** (para clonar el repo)
+
+---
+## 🛠️ Comandos Útiles
 
 ```bash
-# 1. Clonar
-git clone https://github.com/cjgranda19/chatapp.git
-cd chatapp
+# Ver logs en tiempo real
+docker-compose logs -f
 
-# 2. Backend
-cd backend
-npm install
-cp .env.example .env  # Editar con tus valores
-npm run dev
+# Ver logs solo del backend
+docker-compose logs -f backend
 
-# 3. Frontend (nueva terminal)
-cd frontend
-npm install
-cp .env.example .env  # Editar con tus valores
-npm run dev
+# Detener la aplicación
+docker-compose down
 
-# 4. Abrir http://localhost:5173
+# Reiniciar servicios
+docker-compose restart
+
+# Reconstruir desde cero
+docker-compose down -v
+docker-compose up --build
 ```
-
-**Requisitos Local:** Node.js 18+, MongoDB 5+  
-**Requisitos Docker:** Solo Docker Desktop
-
----
-
-## �📋 Tabla de Contenidos
-
-- [Características](#-características)
-- [Arquitectura](#-arquitectura)
-- [Requisitos Previos](#-requisitos-previos)
-- [Instalación](#-instalación)
-- [Configuración](#-configuración)
-- [Ejecución](#-ejecución)
-- [Uso](#-uso)
-- [Tecnologías](#-tecnologías)
-- [Estructura del Proyecto](#-estructura-del-proyecto)
-- [Diagramas](#-diagramas)
-- [Seguridad](#-seguridad)
-- [Pruebas](#-pruebas)
-- [Contribución](#-contribución)
-- [Licencia](#-licencia)
-
----
-
-## ✨ Características
-
-### 🔐 Autenticación y Seguridad
-- **Login de administradores** con JWT tokens
-- **Registro de usuarios** con validación de credenciales
-- **PINs de 4 dígitos** para acceso a salas
-- **Sesión única por dispositivo** - Un usuario solo puede estar conectado desde un lugar
-- **Encriptación de contraseñas** con bcrypt
-- **Lista negra de usuarios expulsados** - Los expulsados no pueden reingresar
-
-### 💬 Gestión de Salas
-- **Creación dinámica** de salas por administradores
-- **Dos tipos de salas:**
-  - 📝 **Texto**: Solo mensajes de texto
-  - 📎 **Multimedia**: Mensajes + archivos (imágenes, videos, PDFs, docs)
-- **PINs únicos** autogenerados o personalizados
-- **Panel de administración** para gestionar salas creadas
-- **Edición y eliminación** de salas por el creador
-
-### 💬 Funcionalidades de Chat
-- **Mensajería en tiempo real** con Socket.IO (latencia < 1s)
-- **Edición de mensajes** (solo el autor, texto únicamente)
-- **Eliminación de mensajes** (autor o administrador de sala)
-- **Subida de archivos multimedia** (límite: 50MB)
-  - Imágenes: JPG, PNG, GIF, WebP, SVG
-  - Videos: MP4, WebM, MOV
-  - Documentos: PDF, DOC, DOCX, XLS, XLSX
-  - Comprimidos: ZIP, RAR, 7Z
-  - Audio: MP3, WAV, OGG
-- **Lista de usuarios activos** en tiempo real
-- **Notificaciones de entrada/salida** de usuarios
-- **Indicador de mensaje editado** con badge visual
-- **Menú contextual** (click derecho) para acciones rápidas
-
-### 👥 Gestión de Usuarios
-- **Expulsión de usuarios** por administradores
-- **Desconexión automática por inactividad** (5 minutos)
-- **Heartbeat automático** cada 2 minutos para mantener conexión
-- **Nicknames únicos** por sala
-- **Acceso anónimo** sin registro (solo se requiere para crear salas)
-
-### 🎨 Interfaz de Usuario
-- **Diseño responsivo** estilo WhatsApp
-- **Tema morado/verde** con gradientes modernos
-- **Notificaciones toast** en lugar de alerts
-- **Modales de confirmación** para acciones críticas
-- **Overlays informativos** para desconexiones
-- **Animaciones suaves** y transiciones
-- **Accesibilidad** mejorada
 
 ---
 
 ## 🏗️ Arquitectura
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        FRONTEND (React)                      │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
-│  │   Login/     │  │   Dashboard  │  │  ChatRoom    │     │
-│  │   Register   │  │              │  │              │     │
-│  └──────────────┘  └──────────────┘  └──────────────┘     │
-│         │                  │                  │             │
-│         └──────────────────┴──────────────────┘             │
-│                            │                                │
-│                  ┌─────────▼──────────┐                    │
-│                  │   Socket.IO Client  │                    │
-│                  │   Axios (REST API)  │                    │
-│                  └─────────┬──────────┘                    │
-└────────────────────────────┼───────────────────────────────┘
+┌─────────────────┐
+│   Frontend      │  React + Vite + Socket.IO Client
+│   Port: 5173    │
+└────────┬────────┘
+         │
+         ↓
+┌─────────────────┐
+│   Backend       │  Node.js + Express + Socket.IO
+│   Port: 5000    │  + AES-256 Encryption
+└────────┬────────┘
+         │
+         ↓
+┌─────────────────┐
+│   MongoDB       │  Base de datos
+│   Port: 27017   │
+└─────────────────┘
+```
+
+---
+
+## 🔐 Seguridad Implementada
+
+- ✅ **Encriptación AES-256-CBC** para mensajes
+- ✅ **JWT con 128 caracteres** criptográficamente seguros
+- ✅ **Logging seguro** (oculta datos sensibles)
+- ✅ **Detección de esteganografía** en archivos
+- ✅ **Validación de archivos corruptos**
+- ✅ **Docker con Node 22-alpine** (sin CVEs)
+- ✅ **Helmet + CORS** configurado
+- ✅ **Validación de entrada** con express-validator
+
+---
                              │
                     ─────────┼─────────
                     WebSocket│HTTP/REST

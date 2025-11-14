@@ -10,9 +10,13 @@ router.get("/room/:roomId", async (req, res) => {
   try {
     const { roomId } = req.params;
     const messages = await Message.find({ room: roomId }).sort({ timestamp: 1 });
-    res.json(messages);
+    
+    // Desencriptar mensajes antes de enviar
+    const decryptedMessages = Message.decryptMessages(messages);
+    
+    res.json(decryptedMessages);
   } catch (err) {
-    console.error("Error obteniendo mensajes:", err);
+    errorLog("Error obteniendo mensajes", err, { roomId: req.params.roomId });
     res.status(500).json({ message: "Error al obtener mensajes" });
   }
 });

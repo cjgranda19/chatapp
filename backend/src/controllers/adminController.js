@@ -1,6 +1,7 @@
 import Admin from "../models/Admin.js";
 import Room from "../models/Room.js";
 import jwt from "jsonwebtoken";
+import { secureLog, errorLog } from "../utils/logger.js";
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || "secretkey", {
@@ -53,12 +54,12 @@ export const loginAdmin = async (req, res) => {
 // 🔹 Obtener salas creadas por el usuario
 export const getMyRooms = async (req, res) => {
   try {
-    console.log("🔍 User ID:", req.user._id);
+    secureLog("🔍", "Obteniendo salas de admin", { userId: req.user._id.toString() });
     const rooms = await Room.find({ createdBy: req.user._id });
-    console.log("📋 Salas encontradas:", rooms.length);
+    secureLog("📋", "Salas encontradas", { count: rooms.length });
     res.json(rooms);
   } catch (err) {
-    console.error("❌ Error al obtener salas:", err);
+    errorLog("Error al obtener salas", err);
     res.status(500).json({ message: "Error al obtener salas", error: err.message });
   }
 };
@@ -69,9 +70,7 @@ export const updateRoom = async (req, res) => {
     const { name, type } = req.body;
     const room = await Room.findById(req.params.id);
 
-    console.log("🔍 Editando sala:", req.params.id);
-    console.log("👤 User ID:", req.user._id);
-    console.log("🏠 Room createdBy:", room?.createdBy);
+    secureLog("🔍", "Editando sala", { roomId: req.params.id });
 
     if (!room) {
       return res.status(404).json({ message: "Sala no encontrada" });
@@ -79,7 +78,7 @@ export const updateRoom = async (req, res) => {
 
     // Verificar que el usuario sea el creador
     if (room.createdBy.toString() !== req.user._id.toString()) {
-      console.log("❌ Usuario no es el creador");
+      secureLog("❌", "Usuario no autorizado para editar sala", { roomId: req.params.id });
       return res.status(403).json({ message: "No tienes permiso para editar esta sala" });
     }
 
@@ -87,10 +86,10 @@ export const updateRoom = async (req, res) => {
     room.type = type || room.type;
     await room.save();
 
-    console.log("✅ Sala actualizada");
+    secureLog("✅", "Sala actualizada", { roomId: req.params.id });
     res.json({ message: "Sala actualizada correctamente", room });
   } catch (err) {
-    console.error("❌ Error al actualizar sala:", err);
+    errorLog("Error al actualizar sala", err, { roomId: req.params.id });
     res.status(500).json({ message: "Error al actualizar sala", error: err.message });
   }
 };
@@ -100,9 +99,7 @@ export const deleteRoom = async (req, res) => {
   try {
     const room = await Room.findById(req.params.id);
 
-    console.log("🗑️ Eliminando sala:", req.params.id);
-    console.log("👤 User ID:", req.user._id);
-    console.log("🏠 Room createdBy:", room?.createdBy);
+    secureLog("🗑️", "Eliminando sala", { roomId: req.params.id });
 
     if (!room) {
       return res.status(404).json({ message: "Sala no encontrada" });
@@ -110,15 +107,15 @@ export const deleteRoom = async (req, res) => {
 
     // Verificar que el usuario sea el creador
     if (room.createdBy.toString() !== req.user._id.toString()) {
-      console.log("❌ Usuario no es el creador");
+      secureLog("❌", "Usuario no autorizado para eliminar sala", { roomId: req.params.id });
       return res.status(403).json({ message: "No tienes permiso para eliminar esta sala" });
     }
 
     await Room.findByIdAndDelete(req.params.id);
-    console.log("✅ Sala eliminada");
+    secureLog("✅", "Sala eliminada", { roomId: req.params.id });
     res.json({ message: "Sala eliminada correctamente" });
   } catch (err) {
-    console.error("❌ Error al eliminar sala:", err);
+    errorLog("Error al eliminar sala", err, { roomId: req.params.id });
     res.status(500).json({ message: "Error al eliminar sala", error: err.message });
   }
 };

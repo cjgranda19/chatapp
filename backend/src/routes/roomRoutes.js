@@ -1,13 +1,17 @@
 // routes/roomRoutes.js
 import express from "express";
 import Room from "../models/Room.js";
-import { protect } from "../middleware/authMiddleware.js";
+import { protectAny } from "../middleware/authMiddleware.js";
+import { 
+  validateCreateRoom, 
+  validatePin 
+} from "../middleware/validators.js";
 import crypto from "crypto";
 
 const router = express.Router();
 
 // Crear nueva sala
-router.post("/", protect, async (req, res) => {
+router.post("/", protectAny, validateCreateRoom, async (req, res) => {
   try {
     const { name, type, pin } = req.body;
     const roomPin =
@@ -49,6 +53,17 @@ router.get("/:id", async (req, res) => {
     res.json(room);
   } catch (err) {
     res.status(500).json({ message: "Error al obtener sala" });
+  }
+});
+
+// Buscar sala por PIN
+router.get("/pin/:pin", validatePin, async (req, res) => {
+  try {
+    const room = await Room.findOne({ pin: req.params.pin }).populate("createdBy");
+    if (!room) return res.status(404).json({ message: "Sala no encontrada con ese PIN" });
+    res.json(room);
+  } catch (err) {
+    res.status(500).json({ message: "Error al buscar sala por PIN" });
   }
 });
 

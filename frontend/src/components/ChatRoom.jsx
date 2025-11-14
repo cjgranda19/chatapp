@@ -143,8 +143,29 @@ export default function ChatRoom({ roomId, pin, nickname, onBack }) {
       toast.success("Archivo enviado 🎉", { id: "upload" });
     } catch (err) {
       console.error("Error subiendo archivo:", err);
-      const errorMsg = err.response?.data?.message || "Error al subir archivo";
-      toast.error(errorMsg, { id: "upload" });
+      
+      // Mostrar mensaje específico del servidor
+      let errorMsg = "Error al subir archivo";
+      
+      if (err.response?.status === 403) {
+        // Archivo bloqueado por seguridad
+        const reason = err.response?.data?.reason || "Archivo no permitido";
+        const details = err.response?.data?.details;
+        
+        errorMsg = details 
+          ? `🚫 ${reason}\n${details}` 
+          : `🚫 ${reason}`;
+      } else {
+        errorMsg = err.response?.data?.message || "Error al subir archivo";
+      }
+      
+      toast.error(errorMsg, { 
+        id: "upload",
+        duration: 6000, // Mostrar por 6 segundos para leer el mensaje
+        style: {
+          maxWidth: '500px'
+        }
+      });
     }
 
     // Limpiar el input

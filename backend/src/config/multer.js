@@ -1,5 +1,6 @@
 import multer from "multer";
 import path from "path";
+import { secureLog } from "../utils/logger.js";
 import fs from "fs";
 
 // Crear carpeta si no existe

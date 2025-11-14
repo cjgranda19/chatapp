@@ -10,6 +10,9 @@ export default function AdminPanel({ onBack }) {
   const [form, setForm] = useState({ name: "", type: "" });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [roomToDelete, setRoomToDelete] = useState(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newRoom, setNewRoom] = useState({ name: "", type: "texto", pin: "" });
+  const [loadingCreate, setLoadingCreate] = useState(false);
 
   // 🔹 Cargar salas desde el backend
   const fetchRooms = async () => {
@@ -96,16 +99,99 @@ export default function AdminPanel({ onBack }) {
     }
   };
 
+  // 🏗️ Crear nueva sala
+  const handleCreateRoom = async (e) => {
+    e.preventDefault();
+    if (!newRoom.name.trim()) {
+      toast.error("Ingresa un nombre para la sala");
+      return;
+    }
+    setLoadingCreate(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API_URL}/api/rooms`, newRoom, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast.success("Sala creada correctamente");
+      setNewRoom({ name: "", type: "texto", pin: "" });
+      setShowCreateForm(false);
+      fetchRooms();
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Error al crear sala");
+    } finally {
+      setLoadingCreate(false);
+    }
+  };
+
   return (
     <div className="admin-container">
       <header className="admin-header">
         <h2>Mis Salas Administradas</h2>
-        <button className="back-button" onClick={onBack}>
-          ← Volver
-        </button>
+        <div className="header-actions">
+          <button 
+            className="create-button" 
+            onClick={() => setShowCreateForm(!showCreateForm)}
+          >
+            {showCreateForm ? "✕ Cerrar" : "➕ Nueva Sala"}
+          </button>
+          <button className="back-button" onClick={onBack}>
+            ← Volver
+          </button>
+        </div>
       </header>
 
       <div className="admin-content">
+        {/* Formulario de Creación */}
+        {showCreateForm && (
+          <div className="create-form-section">
+            <h3>🏗️ Crear Nueva Sala</h3>
+            <form onSubmit={handleCreateRoom} className="create-form">
+              <div className="form-row">
+                <input
+                  type="text"
+                  placeholder="Nombre de la sala"
+                  value={newRoom.name}
+                  onChange={(e) =>
+                    setNewRoom({ ...newRoom, name: e.target.value })
+                  }
+                  required
+                />
+                <select
+                  value={newRoom.type}
+                  onChange={(e) =>
+                    setNewRoom({ ...newRoom, type: e.target.value })
+                  }
+                >
+                  <option value="texto">Texto</option>
+                  <option value="multimedia">Multimedia</option>
+                </select>
+                <input
+                  type="text"
+                  placeholder="PIN (opcional)"
+                  value={newRoom.pin}
+                  onChange={(e) => setNewRoom({ ...newRoom, pin: e.target.value })}
+                  maxLength="4"
+                />
+              </div>
+              <div className="form-actions">
+                <button type="submit" disabled={loadingCreate} className="save-btn">
+                  {loadingCreate ? "Creando..." : "✓ Crear Sala"}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    setNewRoom({ name: "", type: "texto", pin: "" });
+                  }}
+                  className="cancel-btn"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {editingRoom ? (
           <div className="edit-form">
             <h3>✏️ Editar Sala</h3>
@@ -139,6 +225,7 @@ export default function AdminPanel({ onBack }) {
             {rooms.length === 0 ? (
               <div className="empty-state">
                 <p>No has creado ninguna sala todavía.</p>
+                <p className="hint">👆 Usa el botón "➕ Nueva Sala" para crear tu primera sala</p>
               </div>
             ) : (
               rooms.map((room) => (

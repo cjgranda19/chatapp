@@ -4,12 +4,13 @@ import { Server } from "socket.io";
 import dotenv from "dotenv";
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
+import { initializeAdmin } from "./config/initAdmin.js";
 import Message from "./models/Message.js";
 import Room from "./models/Room.js";
 import User from "./models/User.js";
 import roomAdminRoutes from "./routes/roomAdminRoutes.js";
-
-
+import { encrypt, decrypt } from "./utils/encryption.js";
+import { secureLog, errorLog, systemLog } from "./utils/logger.js";
 
 dotenv.config();
 
@@ -21,7 +22,10 @@ const io = new Server(server, {
   },
 });
 
-connectDB();
+// Conectar a la base de datos e inicializar admin
+connectDB().then(() => {
+  initializeAdmin();
+});
 
 // Lista de usuarios activos
 const activeUsers = {};
@@ -52,7 +56,7 @@ setInterval(() => {
       const socket = io.sockets.sockets.get(session.socketId);
       
       if (socket) {
-        console.log(`⏰ ${nickname} desconectado por inactividad (${Math.floor(inactiveTime / 1000)}s)`);
+        console.log(`⏰ Usuario desconectado por inactividad (${Math.floor(inactiveTime / 1000)}s) - Socket: ${session.socketId}`);
         
         // Notificar al usuario
         socket.emit("inactivityDisconnect", {
@@ -102,7 +106,7 @@ io.on("connection", (socket) => {
         socket.emit("kicked", {
           message: "Has sido expulsado de esta sala y no puedes volver a entrar"
         });
-        console.log(`🚫 ${nickname} intentó entrar a sala ${roomId} pero está expulsado`);
+        secureLog("🚫", "Usuario expulsado intentó entrar", { roomId, socketId: socket.id });
         return;
       }
 
@@ -111,7 +115,7 @@ io.on("connection", (socket) => {
       if (reconnectCooldown[cooldownKey]) {
         const timeSinceBlock = Date.now() - reconnectCooldown[cooldownKey];
         if (timeSinceBlock < COOLDOWN_TIME) {
-          console.log(`⏱️ ${nickname} (${socket.id}) en cooldown. Bloqueando reconexión inmediata.`);
+          secureLog("⏱️", "Usuario en cooldown", { socketId: socket.id, cooldownMs: COOLDOWN_TIME - timeSinceBlock });
           socket.emit("sessionReplaced", {
             message: "Tu sesión fue reemplazada por otro dispositivo. Espera unos segundos."
           });
@@ -128,11 +132,11 @@ io.on("connection", (socket) => {
         const oldRoomId = existingSession.roomId;
         const oldSocketId = existingSession.socketId;
         
-        console.log(`⚠️ ${nickname} ya tiene una sesión activa. Socket actual: ${oldSocketId}, Nuevo socket: ${socket.id}`);
+        secureLog("⚠️", "Sesión duplicada detectada", { oldSocketId, newSocketId: socket.id });
         
         // Verificar si es el MISMO socket intentando reconectarse
         if (oldSocketId === socket.id) {
-          console.log(`🔄 ${nickname} está reconectándose con el mismo socket, permitiendo...`);
+          secureLog("🔄", "Reconexión del mismo socket permitida", { socketId: socket.id });
           // Es una reconexión del mismo socket, actualizar timestamp
           userSessions[nickname].lastActivity = Date.now();
           userSessions[nickname].roomId = roomId;
@@ -142,12 +146,12 @@ io.on("connection", (socket) => {
           
           if (oldSocket) {
             // Socket anterior existe, desconectarlo
-            console.log(`🔄 Desconectando sesión anterior de ${nickname} (socket: ${oldSocketId})`);
+            secureLog("🔄", "Desconectando sesión anterior", { oldSocketId });
             
             // Bloquear reconexión inmediata del socket anterior
             const oldCooldownKey = `${nickname}:${oldSocketId}`;
             reconnectCooldown[oldCooldownKey] = Date.now();
-            console.log(`🚫 Bloqueando reconexión de ${oldCooldownKey} por ${COOLDOWN_TIME}ms`);
+            secureLog("🚫", "Cooldown activado", { cooldownMs: COOLDOWN_TIME });
             
             oldSocket.emit("sessionReplaced", {
               message: "Tu sesión ha sido reemplazada por otro dispositivo"
@@ -194,7 +198,7 @@ io.on("connection", (socket) => {
         lastActivity: Date.now()
       };
       
-      console.log(`✅ Sesión registrada para ${nickname} - Socket: ${socket.id} - Sala: ${roomId}`);
+      secureLog("✅", "Sesión registrada", { nickname, socketId: socket.id, roomId });
 
       socket.join(roomId);
       if (!activeUsers[roomId]) activeUsers[roomId] = [];
@@ -219,15 +223,16 @@ io.on("connection", (socket) => {
         activeUsers[roomId]
       );
 
-      console.log(`👤 ${nickname} se unió a ${room.name} (${roomId})`);
+      secureLog("👤", "Usuario unido a sala", { nickname, roomId });
     } catch (err) {
-      console.error("Error al unir a la sala:", err);
+      errorLog("Error al unir a la sala", err, { roomId });
     }
   });
 
   // Enviar mensaje o archivo
   socket.on("sendMessage", async ({ roomId, sender, content, type, fileName, messageId }) => {
-    console.log("📩 Datos recibidos:", { roomId, sender, type, fileName, content, messageId });
+    // Log sin datos sensibles
+    console.log("📩 Mensaje recibido - Tipo:", type, "- Sala:", roomId);
     try {
       if (!roomId || !sender) {
         console.log("❌ Faltan datos del mensaje");
@@ -241,36 +246,43 @@ io.on("connection", (socket) => {
       }
 
       // Si es archivo, no guardar nuevamente (ya se guardó en el controller)
-      // Solo propagar el mensaje a todos los usuarios
+      // Solo propagar el mensaje a todos los usuarios (desencriptado)
       if (type === "file") {
-        io.to(roomId).emit("newMessage", {
-          _id: messageId || Date.now().toString(),
-          sender,
-          content,
-          type: "file",
-          timestamp: new Date(),
-          fileName,
-        });
-        console.log(`📎 Archivo propagado en sala ${roomId}`);
+        const savedMessage = await Message.findById(messageId);
+        if (savedMessage) {
+          const decrypted = savedMessage.decryptMessage();
+          io.to(roomId).emit("newMessage", {
+            _id: decrypted._id,
+            sender: decrypted.sender,
+            content: content, // La URL no se encripta
+            type: "file",
+            timestamp: decrypted.timestamp,
+            fileName,
+          });
+          console.log(`📎 Archivo propagado en sala ${roomId}`);
+        }
         return;
       }
 
       app.use("/api/admin/rooms", roomAdminRoutes);
 
-      // Si es mensaje de texto normal, guardarlo
+      // Si es mensaje de texto normal, guardarlo (se encriptará automáticamente)
       const message = new Message({ room: roomId, sender, content, type: type || "text" });
       await message.save();
 
+      // Desencriptar para enviar a los clientes
+      const decryptedMessage = message.decryptMessage();
+
       io.to(roomId).emit("newMessage", {
-        _id: message._id,
-        sender,
-        content,
-        type: type || "text",
-        timestamp: message.timestamp,
+        _id: decryptedMessage._id,
+        sender: decryptedMessage.sender,
+        content: decryptedMessage.content,
+        type: decryptedMessage.type || "text",
+        timestamp: decryptedMessage.timestamp,
       });
-      console.log(`💬 Mensaje enviado en sala ${roomId}`);
+      secureLog("💬", "Mensaje enviado", { roomId, type: decryptedMessage.type });
     } catch (err) {
-      console.error("❌ Error al enviar mensaje:", err);
+      errorLog("Error al enviar mensaje", err, { roomId });
       socket.emit("errorMessage", "Error al enviar mensaje");
     }
   });
@@ -304,9 +316,9 @@ io.on("connection", (socket) => {
         id: messageId,
         newContent: message.content 
       });
-      console.log(`🗑️ Mensaje ${messageId} eliminado por ${nickname} en sala ${roomId}`);
+      secureLog("🗑️", "Mensaje eliminado", { messageId, roomId, isAdmin });
     } catch (err) {
-      console.error("❌ Error al eliminar mensaje:", err);
+      errorLog("Error al eliminar mensaje", err, { messageId, roomId });
       socket.emit("errorMessage", "Error al eliminar mensaje");
     }
   });
@@ -329,9 +341,9 @@ io.on("connection", (socket) => {
         newContent,
         edited: true,
       });
-      console.log(`✏️ Mensaje ${messageId} editado en sala ${roomId}`);
+      secureLog("✏️", "Mensaje editado", { messageId, roomId });
     } catch (err) {
-      console.error("❌ Error al editar mensaje:", err);
+      errorLog("Error al editar mensaje", err, { messageId, roomId });
       socket.emit("errorMessage", "Error al editar mensaje");
     }
   });
@@ -393,11 +405,11 @@ io.on("connection", (socket) => {
         // Actualizar lista de participantes
         io.to(roomId).emit("activeUsersUpdate", activeUsers[roomId]);
 
-        console.log(`🚫 ${targetNickname} expulsado de sala ${roomId} por ${adminNickname}`);
-        console.log(`📋 Lista negra de sala ${roomId}:`, kickedUsers[roomId]);
+        secureLog("🚫", "Usuario expulsado de sala", { targetNickname, roomId, adminNickname });
+        secureLog("📋", "Lista negra actualizada", { roomId, count: kickedUsers[roomId]?.length || 0 });
       }
     } catch (err) {
-      console.error("❌ Error al expulsar usuario:", err);
+      errorLog("Error al expulsar usuario", err, { targetNickname, adminNickname });
       socket.emit("errorMessage", "Error al expulsar usuario");
     }
   });
@@ -461,7 +473,7 @@ setInterval(() => {
     for (const nickname in userSessions) {
       const session = userSessions[nickname];
       const inactiveSeconds = Math.floor((Date.now() - session.lastActivity) / 1000);
-      console.log(`   👤 ${nickname} - Inactivo: ${inactiveSeconds}s - Sala: ${session.roomId}`);
+      secureLog("👤", "Sesión activa", { nickname, inactiveSeconds, roomId: session.roomId });
     }
   }
 }, 60 * 1000); // Log cada minuto

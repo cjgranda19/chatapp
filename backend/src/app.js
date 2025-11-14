@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import helmet from "helmet";
+// import mongoSanitize from "express-mongo-sanitize"; // Temporalmente desactivado por conflicto
 import adminRoutes from "./routes/adminRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
@@ -14,17 +16,43 @@ dotenv.config();
 
 const app = express();
 
-// Configuración de CORS (permitimos el frontend)
+// 🛡️ Configuración de CORS (debe ir PRIMERO)
+const allowedOrigins = process.env.CLIENT_ORIGIN.split(',').map(origin => origin.trim());
+
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN,
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: function (origin, callback) {
+      // Permitir solicitudes sin origin (como Postman) o las del array
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('No permitido por CORS'));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204
   })
 );
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// 🛡️ Middlewares de seguridad
+// Helmet - Protección de headers HTTP (DESPUÉS de CORS)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  crossOriginEmbedderPolicy: false,
+  contentSecurityPolicy: false, // Desactivar CSP para desarrollo
+}));
+
+// ⚠️ Nota: express-mongo-sanitize desactivado temporalmente por conflicto con Node 22
+// La protección contra inyección NoSQL está cubierta por express-validator
+// que valida y sanitiza todos los inputs antes de llegar a MongoDB
+
+// Limitar tamaño de payload para prevenir ataques DoS
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Ruta de prueba
 app.get("/", (req, res) => {

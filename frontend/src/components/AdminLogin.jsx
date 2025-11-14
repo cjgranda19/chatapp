@@ -1,72 +1,56 @@
 import { useState } from "react";
 import axios from "axios";
 import { API_URL } from "../api/config";
-
+import toast from "react-hot-toast";
 
 export default function AdminLogin({ onLogin }) {
-  const [isRegister, setIsRegister] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ username: "admin", password: "" });
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // 🔹 Registro de nuevo admin
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await axios.post(`${API_URL}/api/admin/register`, form);
-      alert("Administrador creado correctamente ✅");
-      localStorage.setItem("token", res.data.token);
-      onLogin(res.data);
-    } catch (error) {
-      alert(error.response?.data?.message || "Error al registrar admin");
-    }
-  };
-
-  // 🔹 Inicio de sesión
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    
     try {
-      const res = await axios.post(`${API_URL}/api/admin/login`, {
-        email: form.email,
+      const res = await axios.post(`${API_URL}/api/auth/admin/login`, {
+        username: form.username,
         password: form.password,
       });
       localStorage.setItem("token", res.data.token);
+      localStorage.setItem("adminName", res.data.name);
+      toast.success("Bienvenido Administrador 👨‍💼");
       onLogin(res.data);
     } catch (error) {
-      alert(error.response?.data?.message || "Error al iniciar sesión");
+      toast.error(error.response?.data?.message || "Credenciales inválidas");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-300 to-purple-300">
       <div className="bg-white rounded-xl shadow-lg p-8 w-96">
-        <h2 className="text-2xl font-semibold mb-4 text-center text-gray-700">
-          {isRegister ? "Registrar Administrador" : "Panel de Administración"}
+        <h2 className="text-2xl font-semibold mb-2 text-center text-gray-700">
+          Panel de Administración
         </h2>
+        <p className="text-sm text-center mb-6 text-gray-500">
+          Credenciales predefinidas: admin / admin
+        </p>
 
-        <form onSubmit={isRegister ? handleRegister : handleLogin}>
-          {isRegister && (
-            <input
-              type="text"
-              name="name"
-              placeholder="Nombre completo"
-              value={form.name}
-              onChange={handleChange}
-              className="border p-2 rounded w-full mb-3"
-              required
-            />
-          )}
-
+        <form onSubmit={handleLogin}>
           <input
-            type="email"
-            name="email"
-            placeholder="Correo"
-            value={form.email}
+            type="text"
+            name="username"
+            placeholder="Usuario"
+            value={form.username}
             onChange={handleChange}
             className="border p-2 rounded w-full mb-3"
             required
+            readOnly
           />
 
           <input
@@ -77,25 +61,21 @@ export default function AdminLogin({ onLogin }) {
             onChange={handleChange}
             className="border p-2 rounded w-full mb-4"
             required
+            autoFocus
           />
 
           <button
             type="submit"
-            className="bg-blue-600 text-white py-2 w-full rounded hover:bg-blue-700 transition"
+            disabled={loading}
+            className="bg-blue-600 text-white py-2 w-full rounded hover:bg-blue-700 transition disabled:bg-gray-400"
           >
-            {isRegister ? "Crear cuenta" : "Ingresar"}
+            {loading ? "Ingresando..." : "Ingresar"}
           </button>
         </form>
 
-        <p className="text-sm text-center mt-4 text-gray-600">
-          {isRegister ? "¿Ya tienes cuenta?" : "¿No tienes cuenta?"}{" "}
-          <button
-            onClick={() => setIsRegister(!isRegister)}
-            className="text-indigo-600 hover:underline"
-          >
-            {isRegister ? "Inicia sesión" : "Regístrate"}
-          </button>
-        </p>
+        <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-gray-600">
+          <strong>⚠️ Nota:</strong> Solo existe un administrador con credenciales predefinidas.
+        </div>
       </div>
     </div>
   );

@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB
   mongodb:
@@ -33,7 +31,8 @@ services:
     environment:
       - NODE_ENV=development
       - MONGODB_URI=mongodb://mongodb:27017/chatapp
-      - JWT_SECRET=${JWT_SECRET:-default_jwt_secret_change_in_production}
+      - JWT_SECRET=0028f87dedbcd520567f00ccf4ea5fc6007c72ac88403938f8ea84521ff1dbb967419db506003a3fee2b081df1ef3aa7d1a1d9926e317e7cb6a92e01e79a5318
+      - ENCRYPTION_KEY=1c191a74b95621a8fe4afce2e695c3d1c830b712cf69cadbed488a7c3cb8a0c5
       - CLIENT_ORIGIN=http://localhost:5173
       - PORT=5000
     volumes:

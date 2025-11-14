@@ -1,6 +1,8 @@
 import Message from "../models/Message.js";
+import { errorLog } from "../utils/logger.js";
 import Room from "../models/Room.js";
 import User from "../models/User.js";
+import { encrypt, decrypt } from "../utils/encryption.js";
 
 // 🔹 Eliminar mensaje (solo admin o autor)
 export const deleteMessage = async (req, res) => {
@@ -22,23 +24,34 @@ export const deleteMessage = async (req, res) => {
     if (!room || !user)
       return res.status(404).json({ message: "Sala o usuario no encontrado" });
 
+    // Desencriptar sender para comparar
+    const decryptedSender = decrypt(message.sender);
+
     // Validar si es admin o autor
     const isAdmin = room.createdBy?.toString() === userId.toString();
-    const isAuthor = message.sender === user.username;
+    const isAuthor = decryptedSender === user.username;
 
     if (!isAdmin && !isAuthor)
       return res.status(403).json({ message: "No autorizado" });
 
-    // Marcar mensaje como eliminado
+    // Marcar mensaje como eliminado (sin encriptar este mensaje del sistema)
     message.content = isAdmin
       ? "🗑️ Mensaje eliminado por el administrador"
       : "🗑️ Mensaje eliminado";
     message.type = "deleted";
-    await message.save();
+    
+    // Guardar sin pasar por el middleware de encriptación
+    await Message.updateOne({ _id: id }, { 
+      content: message.content, 
+      type: "deleted" 
+    });
 
-    res.json({ message: "Mensaje eliminado correctamente", updated: message });
+    const updated = await Message.findById(id);
+    const decrypted = updated.decryptMessage();
+
+    res.json({ message: "Mensaje eliminado correctamente", updated: decrypted });
   } catch (err) {
-    console.error("Error al eliminar mensaje:", err);
+    errorLog("Error al eliminar mensaje", err, { messageId: id });
     res.status(500).json({ message: "Error al eliminar mensaje", error: err.message });
   }
 };
@@ -69,18 +82,24 @@ export const editMessage = async (req, res) => {
     if (!user)
       return res.status(404).json({ message: "Usuario no encontrado" });
 
+    // Desencriptar sender para comparar
+    const decryptedSender = decrypt(message.sender);
+
     // Solo el autor puede editar
-    if (message.sender !== user.username)
+    if (decryptedSender !== user.username)
       return res.status(403).json({ message: "Solo puedes editar tus propios mensajes" });
 
-    // Actualizar mensaje
+    // Actualizar mensaje (se encriptará automáticamente)
     message.content = content.trim();
     message.edited = true;
     await message.save();
 
-    res.json({ message: "Mensaje editado correctamente", updated: message });
+    // Desencriptar para respuesta
+    const decrypted = message.decryptMessage();
+
+    res.json({ message: "Mensaje editado correctamente", updated: decrypted });
   } catch (err) {
-    console.error("Error al editar mensaje:", err);
+    errorLog("Error al editar mensaje", err, { messageId: id });
     res.status(500).json({ message: "Error al editar mensaje", error: err.message });
   }
 };
