@@ -6,19 +6,25 @@ Sistema de chat con salas, mensajes en tiempo real, panel de administración y s
 
 ## 🚀 Inicio Rápido con Docker (RECOMENDADO)
 
-### Para tus compañeros de trabajo
+### 📥 Para descargar y usar este proyecto
 
-#### 1️⃣ Clonar el proyecto
+#### 1️⃣ Clonar desde GitHub
 ```bash
 git clone https://github.com/cjgranda19/chatapp.git
 cd chatapp
 ```
 
+**Alternativa sin Git:** Descarga el ZIP desde https://github.com/cjgranda19/chatapp → Botón "Code" → "Download ZIP"
+
 #### 2️⃣ Iniciar con Docker
 
 **Windows:**
 ```cmd
-INICIAR.bat
+Doble clic en INICIAR.bat
+```
+O desde terminal:
+```cmd
+.\INICIAR.bat
 ```
 
 **Linux/Mac:**
@@ -27,8 +33,11 @@ chmod +x INICIAR.sh
 ./INICIAR.sh
 ```
 
+⏳ **Espera 2-3 minutos** la primera vez (descarga dependencias)
+
 #### 3️⃣ Acceder a la aplicación
 
+El navegador se abre automáticamente en:
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:5000
 
@@ -37,14 +46,17 @@ chmod +x INICIAR.sh
 - **Usuario**: `admin`
 - **Contraseña**: `admin`
 
-✅ El admin se crea automáticamente la primera vez que inicia MongoDB.
+✅ El admin se crea automáticamente en MongoDB al iniciar.
 
 ---
 
 ## 📋 Requisitos
 
-- **Docker Desktop** (Windows/Mac) o **Docker Engine** (Linux)
-- **Git** (para clonar el repo)
+- **Git** (para clonar): https://git-scm.com/downloads
+- **Docker Desktop** (Windows/Mac): https://www.docker.com/products/docker-desktop
+- **Docker Engine** (Linux): `sudo apt install docker.io docker-compose`
+
+**📖 Guía completa de descarga:** Ver [COMO_DESCARGAR.md](COMO_DESCARGAR.md)
 
 ---
 ## 🛠️ Comandos Útiles

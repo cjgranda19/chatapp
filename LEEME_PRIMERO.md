@@ -13,18 +13,33 @@ Sistema de **chat en tiempo real** con:
 
 ## 🚀 Cómo usar (3 pasos)
 
-### 1. Instalar Docker Desktop
+### 1. Descargar el proyecto desde GitHub
+
+**Opción A - Con Git (Recomendado):**
+```bash
+git clone https://github.com/cjgranda19/chatapp.git
+cd chatapp
+```
+
+**Opción B - Sin Git (Descargar ZIP):**
+1. Ve a: https://github.com/cjgranda19/chatapp
+2. Clic en el botón verde **"Code"**
+3. Selecciona **"Download ZIP"**
+4. Extrae el archivo y abre la carpeta
+
+**¿No tienes Git?** Descárgalo desde: https://git-scm.com/downloads
+
+---
+
+### 2. Instalar Docker Desktop
 
 Si no lo tienes:
 - **Windows/Mac**: https://www.docker.com/products/docker-desktop
 - **Linux**: `sudo apt install docker.io docker-compose`
 
-### 2. Descargar el proyecto
+Asegúrate de que Docker esté corriendo (debe decir "Docker is running")
 
-```bash
-git clone https://github.com/cjgranda19/chatapp.git
-cd chatapp
-```
+---
 
 ### 3. Iniciar la aplicación
 
